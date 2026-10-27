@@ -1,0 +1,56 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # В .NET 10 MAUI ставится через NuGet вместе с SDK — workload install больше НЕ нужен
+      - name: Select Xcode
+        run: |
+          ls /Applications/ | grep -i xcode || true
+          XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE" ]; then XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1); fi
+          echo "Using Xcode: $XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+
+      - name: Publish unsigned device build
+        run: |
+          dotnet publish Gorizont/Gorizont.csproj \
+            -f net10.0-ios \
+            -p:TargetFrameworks=net10.0-ios \
+            -c Release \
+            -p:RuntimeIdentifier=ios-arm64 \
+            -p:EnableCodeSigning=false \
+            -p:EnablePackageSigning=false \
+            -p:MtouchLink=SdkOnly
+
+      - name: Collect IPA
+        run: |
+          IPA=$(find . -name "*.ipa" | head -n 1)
+          echo "IPA found: $IPA"
+          if [ -z "$IPA" ]; then
+            echo "::error::No IPA found, dumping bin tree:"
+            find Gorizont/bin -maxdepth 5 | head -60
+            exit 1
+          fi
+          cp "$IPA" unsigned.ipa
+          ls -lh unsigned.ipa
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gorizont-unsigned-ipa
+          path: unsigned.ipa

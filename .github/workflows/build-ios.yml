@@ -11,19 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET 10
+      # GA-версия: её iOS-биндинг рассчитан на Xcode 26.x (27.1 на раннере нет)
+      - name: Setup .NET 10.0.100
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 10.0.100
 
-      # MAUI-компонент для iOS-сборки — в .NET 10 ставится явно
+      # Ставим MAUI по манифестам из состава самого SDK, не обновляя их
       - name: Install MAUI iOS workload
-        run: dotnet workload install maui-ios
+        run: dotnet workload install maui-ios --skip-manifest-update
 
       - name: Select Xcode
         run: |
           ls -d /Applications/Xcode*.app | sort -V
-          XCODE=$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)
+          XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
           if [ -z "$XCODE" ]; then XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1); fi
           echo "Using Xcode: $XCODE"
           sudo xcode-select -s "$XCODE/Contents/Developer"
@@ -38,7 +39,8 @@ jobs:
             -p:RuntimeIdentifier=ios-arm64 \
             -p:EnableCodeSigning=false \
             -p:EnablePackageSigning=false \
-            -p:MtouchLink=SdkOnly
+            -p:MtouchLink=SdkOnly \
+            -p:ValidateXcodeVersion=false
 
       - name: Collect IPA
         run: |

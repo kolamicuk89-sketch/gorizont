@@ -22,8 +22,8 @@
         </PropertyGroup>
 
         <ItemGroup>
-                <!-- MAUI-библиотеки: с .NET 8 подключаются явным пакетом -->
-                <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.110" />
+                <!-- MAUI-библиотеки: версия согласована с SDK 10.0.100 -->
+                <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.0" />
         </ItemGroup>
 
         <ItemGroup>

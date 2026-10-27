@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Gorizont.App">
+    <Application.Resources>
+        <ResourceDictionary>
+
+            <!-- Карточка: полупрозрачное «стекло», меняется от темы (день/ночь) -->
+            <Style x:Key="CardBorder" TargetType="Border">
+                <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#66FFFFFF, Dark=#14FFFFFF}" />
+                <Setter Property="Stroke" Value="{AppThemeBinding Light=#40FFFFFF, Dark=#26FFFFFF}" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="Padding" Value="14,10" />
+            </Style>
+
+            <!-- Круглая кнопка в шапке -->
+            <Style x:Key="CircleButton" TargetType="Border">
+                <Setter Property="WidthRequest" Value="44" />
+                <Setter Property="HeightRequest" Value="44" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 22" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#59FFFFFF, Dark=#1FFFFFFF}" />
+                <Setter Property="Stroke" Value="{AppThemeBinding Light=#40FFFFFF, Dark=#30FFFFFF}" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+
+            <!-- Основной текст -->
+            <Style x:Key="PrimaryLabel" TargetType="Label">
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#16233F, Dark=#EAF2FF}" />
+            </Style>
+
+            <!-- Второстепенный текст -->
+            <Style x:Key="SecondaryLabel" TargetType="Label">
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#33415E, Dark=#A9BEE2}" />
+            </Style>
+
+            <!-- Подпись секции типа "ПО ЧАСАМ" -->
+            <Style x:Key="SectionLabel" TargetType="Label" BasedOn="{StaticResource SecondaryLabel}">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="CharacterSpacing" Value="4" />
+            </Style>
+
+            <!-- Подпись внутри чипа -->
+            <Style x:Key="ChipCaption" TargetType="Label" BasedOn="{StaticResource SecondaryLabel}">
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="CharacterSpacing" Value="2" />
+            </Style>
+
+            <!-- Значение внутри чипа -->
+            <Style x:Key="ChipValue" TargetType="Label" BasedOn="{StaticResource PrimaryLabel}">
+                <Setter Property="FontSize" Value="17" />
+                <Setter Property="FontAttributes" Value="Bold" />
+            </Style>
+
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

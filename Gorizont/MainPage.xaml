@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:Gorizont.Services"
+             x:Class="Gorizont.MainPage"
+             BackgroundColor="#070D24"
+             NavigationPage.HasNavigationBar="False">
+
+    <ContentPage.Resources>
+        <!-- Карточка одного часа -->
+        <DataTemplate x:Key="HourCardTemplate" x:DataType="models:HourForecast">
+            <Border Style="{StaticResource CardBorder}" WidthRequest="86" Margin="0,0,10,0">
+                <VerticalStackLayout Spacing="6" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Label Text="{Binding HourLabel}" FontSize="12" Style="{StaticResource SecondaryLabel}" HorizontalOptions="Center" />
+                    <Label Text="{Binding Emoji}" FontSize="30" HorizontalOptions="Center" />
+                    <Label Text="{Binding TempText}" FontSize="17" FontAttributes="Bold" Style="{StaticResource PrimaryLabel}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+
+        <!-- Карточка одного дня -->
+        <DataTemplate x:Key="DayCardTemplate" x:DataType="models:DayForecast">
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnDayTapped" NumberOfTapsRequired="1" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="2">
+                    <Label Grid.Row="0" Grid.Column="0" Text="{Binding DayName}" FontSize="16" FontAttributes="Bold" Style="{StaticResource PrimaryLabel}" />
+                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding Details}" FontSize="12" Style="{StaticResource SecondaryLabel}" />
+                    <Label Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{Binding Emoji}" FontSize="26" HorizontalOptions="End" VerticalOptions="Center" />
+                    <Label Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Text="{Binding TempText}" FontSize="17" FontAttributes="Bold" Style="{StaticResource PrimaryLabel}" HorizontalOptions="End" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <!-- Потяни вниз = обновить погоду -->
+    <RefreshView x:Name="TheRefreshView" Refreshing="OnRefreshing">
+        <ScrollView>
+            <!-- Сетка, которую код перестраивает при повороте экрана.
+                 Portrait: всё в одну колонку. Landscape: герой слева, остальное справа. -->
+            <Grid x:Name="RootGrid" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="16" Padding="22,14,22,28">
+
+                <Grid.GestureRecognizers>
+                    <SwipeGestureRecognizer Direction="Left" Swiped="OnSwipedLeft" />
+                    <SwipeGestureRecognizer Direction="Right" Swiped="OnSwipedRight" />
+                </Grid.GestureRecognizers>
+
+                <!-- ===================== ШАПКА ===================== -->
+                <Grid x:Name="Header" Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                        <Label Text="ГОРИЗОНТ" Style="{StaticResource SectionLabel}" />
+                        <Label x:Name="CityLabel" Text="…" FontSize="26" FontAttributes="Bold" Style="{StaticResource PrimaryLabel}">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCityClicked" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                        <Label x:Name="UpdatedLabel" Text="" FontSize="12" Style="{StaticResource SecondaryLabel}" />
+                    </VerticalStackLayout>
+
+                    <Border x:Name="AddButton" Grid.Column="1" Style="{StaticResource CircleButton}" VerticalOptions="Start">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnAddClicked" />
+                        </Border.GestureRecognizers>
+                        <Label Text="+" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" Style="{StaticResource PrimaryLabel}" />
+                    </Border>
+
+                    <Border x:Name="ThemeButton" Grid.Column="2" Style="{StaticResource CircleButton}" VerticalOptions="Start">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnThemeClicked" />
+                        </Border.GestureRecognizers>
+                        <Label x:Name="ThemeIcon" Text="🌗" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                </Grid>
+
+                <!-- ===================== ГЕРОЙ: СЕЙЧАС ===================== -->
+                <VerticalStackLayout x:Name="Hero" Grid.Row="1" Spacing="2" VerticalOptions="Center" HorizontalOptions="Center">
+                    <Label x:Name="WeatherEmoji" Text="📦" FontSize="68" HorizontalOptions="Center">
+                        <Label.Shadow>
+                            <Shadow Brush="#33000000" Opacity="0.5" Radius="14" Offset="0,6" />
+                        </Label.Shadow>
+                    </Label>
+                    <Label x:Name="TempLabel" Text="—" FontSize="96" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White">
+                        <Label.Shadow>
+                            <Shadow Brush="#40000000" Opacity="0.6" Radius="16" Offset="0,6" />
+                        </Label.Shadow>
+                    </Label>
+                    <Label x:Name="CondLabel" Text="Загружаю погоду…" FontSize="17" HorizontalOptions="Center" TextColor="#F2FFFFFF" />
+                    <Label x:Name="FeelsLabel" Text="" FontSize="14" HorizontalOptions="Center" TextColor="#D0FFFFFF" />
+                </VerticalStackLayout>
+
+                <!-- ===================== ЧИПЫ: ВЕТЕР / ВЛАЖНОСТЬ / ДАВЛЕНИЕ ===================== -->
+                <Grid x:Name="Chips" Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                    <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
+                            <Label Text="💨 ВЕТЕР" Style="{StaticResource ChipCaption}" HorizontalOptions="Center" />
+                            <Label x:Name="WindLabel" Text="—" Style="{StaticResource ChipValue}" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
+                            <Label Text="💧 ВЛАЖНОСТЬ" Style="{StaticResource ChipCaption}" HorizontalOptions="Center" />
+                            <Label x:Name="HumLabel" Text="—" Style="{StaticResource ChipValue}" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
+                            <Label Text="📊 ДАВЛЕНИЕ" Style="{StaticResource ChipCaption}" HorizontalOptions="Center" />
+                            <Label x:Name="PressLabel" Text="—" Style="{StaticResource ChipValue}" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- ===================== ПО ЧАСАМ ===================== -->
+                <VerticalStackLayout x:Name="HourSection" Grid.Row="3" Spacing="10">
+                    <Label Text="ПО ЧАСАМ" Style="{StaticResource SectionLabel}" />
+                    <CollectionView x:Name="HourCollection"
+                                    ItemsLayout="HorizontalList"
+                                    HeightRequest="118"
+                                    ItemTemplate="{StaticResource HourCardTemplate}" />
+                </VerticalStackLayout>
+
+                <!-- ===================== НА 5 ДНЕЙ ===================== -->
+                <VerticalStackLayout x:Name="DaySection" Grid.Row="4" Spacing="10">
+                    <Label Text="НА 5 ДНЕЙ" Style="{StaticResource SectionLabel}" />
+                    <VerticalStackLayout x:Name="DayStack" BindableLayout.ItemTemplate="{StaticResource DayCardTemplate}" />
+                </VerticalStackLayout>
+
+            </Grid>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>

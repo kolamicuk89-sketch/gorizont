@@ -4,8 +4,8 @@ namespace Gorizont.Platforms.iOS;
 
 public class Program
 {
-	static void Main(string[] args)
-	{
-		UIApplication.Main(args, null, typeof(App));
-	}
+    static void Main(string[] args)
+    {
+        UIApplication.Main(args, null, typeof(AppDelegate));
+    }
 }

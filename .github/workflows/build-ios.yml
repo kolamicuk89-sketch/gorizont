@@ -24,11 +24,25 @@ jobs:
       - name: Select Xcode
         run: |
           ls -d /Applications/Xcode*.app | sort -V
-          XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
-          if [ -z "$XCODE" ]; then XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1); fi
+          XCODE=/Applications/Xcode_26.6.app
+          if [ ! -d "$XCODE" ]; then
+            XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          fi
+          if [ -z "$XCODE" ]; then
+            XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          fi
           echo "Using Xcode: $XCODE"
           sudo xcode-select -s "$XCODE/Contents/Developer"
           xcodebuild -version
+          # На образе нет ссылки MacOSX.sdk (только MacOSX26.5.sdk) — без неё не находится actool.
+          # Создаём ссылку сами, если её нет.
+          MSSDK="$XCODE/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs"
+          ls -la "$MSSDK" || true
+          if [ -d "$MSSDK" ] && [ ! -e "$MSSDK/MacOSX.sdk" ]; then
+            LATEST=$(ls -d "$MSSDK"/MacOSX*.sdk | sort -V | tail -1)
+            echo "Linking MacOSX.sdk -> $LATEST"
+            sudo ln -sfn "$LATEST" "$MSSDK/MacOSX.sdk"
+          fi
 
       - name: Publish unsigned device build
         run: |

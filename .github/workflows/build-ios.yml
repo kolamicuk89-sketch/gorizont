@@ -16,7 +16,10 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # В .NET 10 MAUI ставится через NuGet вместе с SDK — workload install больше НЕ нужен
+      # MAUI-компонент для iOS-сборки — в .NET 10 ставится явно
+      - name: Install MAUI iOS workload
+        run: dotnet workload install maui-ios
+
       - name: Select Xcode
         run: |
           ls /Applications/ | grep -i xcode || true
